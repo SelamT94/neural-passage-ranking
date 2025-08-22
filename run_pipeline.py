@@ -1,15 +1,22 @@
 # run_pipeline.py
 
+import os
+import sys
+
+# Add the 'src' directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
 from src.retriever import BM25Retriever
 from src.reranker import BertReranker
+from src.llm_refiner import LLMRefiner
 
 def main():
-    # --- Initialize both components ---
+    # --- Initialize all components ---
     retriever = BM25Retriever()
     reranker = BertReranker()
+    llm_refiner = LLMRefiner(api_key='AIzaSyCoF_qrgNdqIG1JXRZZ53YG1_3ciKBXFNI')
 
     # --- Define a query ---
-    # Try changing this to other queries!
     query = "function of the human heart"
 
     print("\n" + "="*50)
@@ -17,25 +24,28 @@ def main():
     print("="*50 + "\n")
 
     # --- Stage 1: Candidate Retrieval ---
-    # Get the top 100 candidate passages from BM25
     print("--- Stage 1: Retrieving candidates with BM25 ---")
     candidate_passages = retriever.search(query, k=100)
-
     print(f"Retrieved {len(candidate_passages)} candidates.")
-    print("Top 5 candidates from BM25:")
-    for i, (_, passage) in enumerate(candidate_passages[:5]):
-        print(f"  {i+1}. {passage[:120]}...")
 
     # --- Stage 2: Semantic Re-ranking ---
     print("\n--- Stage 2: Re-ranking with BERT Cross-Encoder ---")
-    reranked_passages = reranker.rerank(query, candidate_passages)
-
+    reranked_results = reranker.rerank(query, candidate_passages)
     print("Re-ranking complete.")
-    print("\nFinal Top 5 Ranked Passages:")
-    for i, (_, passage, score) in enumerate(reranked_passages[:5]):
-        print(f"  {i+1}. (Score: {score:.4f}) {passage[:120]}...")
 
-    print("\nPipeline execution finished! 🎉")
+    # --- Stage 3: LLM Refinement ---
+    if reranked_results:
+        top_passage_original = reranked_results[0][1] # Get the top-ranked passage text
+        print("\n--- Stage 3: LLM Refinement of Top Passage ---")
+        top_passage_refined = llm_refiner.refine_passage(top_passage_original)
+        
+        print("\nOriginal Top Passage:")
+        print(f"  {top_passage_original}")
+        print("\nLLM Refined Passage:")
+        print(f"  {top_passage_refined}")
+    
+    print("\n" + "="*50)
+    print("Pipeline execution finished! 🎉")
 
 if __name__ == '__main__':
     main()
