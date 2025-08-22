@@ -1,8 +1,9 @@
 # scripts/evaluate.py
 
-import os
+import sys,os
 import pandas as pd
 from tqdm import tqdm
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from src.retriever import BM25Retriever
 from src.reranker import BertReranker
 
