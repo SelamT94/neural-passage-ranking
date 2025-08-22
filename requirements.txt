@@ -1,0 +1,12 @@
+# Core functionality
+pandas
+rank_bm25
+sentence-transformers
+requests
+
+# Data handling
+datasets
+
+# Utilities
+tqdm
+jupyterlab 
